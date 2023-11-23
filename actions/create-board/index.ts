@@ -1,52 +1,64 @@
 "use server";
 
-import { z } from "zod";
+import { auth } from "@clerk/nextjs";
+
+import { InputType, ReturnType } from "./types";
 
 import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
+import { createSafeAction } from "@/lib/create-safe-action";
+import { CreateBoard } from "./schema";
 
-export type State = {
-    errors?:{
-        title?: string[];
-    },
-    message?: string | null;
-}
 
-const CreateBoard= z.object({
-    title: z.string().min(3, {
-        message: "Minimum length of 3 letters is required"
-    })
-});
+const handler = async (data: InputType): Promise<ReturnType> => {
+    const{ userId, orgId } = auth();
 
-export async function create(prevState: State ,formData: FormData) {
-    const validatedFields = CreateBoard.safeParse({
-        title: formData.get("title"),
-    });
-
-    if(!validatedFields.success) {
+    if (!userId || !orgId) {
         return {
-            errors: validatedFields.error.flatten().fieldErrors,
-            message: "Missing fields."
+            error: "Unauthorized",
+        }
+    }   
+
+    const { title, image } = data;
+
+    const [
+        imageId,
+        imageThumbUrl,
+        imageFullUrl,
+        imageLinkHTML,
+        imageUserName
+    ] = image.split("|");
+
+    if (!imageId || !imageThumbUrl || !imageFullUrl || !imageUserName || !imageLinkHTML) {
+        return {
+          error: "Missing fields. Failed to create board."
+        };
+      }
+
+    let board;
+
+    try{
+
+        board = await db.board.create({
+            data: {
+                title,
+                orgId,
+                imageId,
+                imageThumbUrl,
+                imageFullUrl,
+                imageLinkHTML,
+                imageUserName,
+            }
+        })
+    } catch (error) {
+        return {
+            error: "Failed to create."
         }
     }
 
-    const { title } = validatedFields.data;
+    revalidatePath(`/board/${board.id}`);
+    return { data: board };
 
-    try{
-        await db.board.create({
-            data: {
-                title,
-            }
-        });
-    } catch(error) {
-        return{
-            message: "Database Error",
-        } 
-    }
+}
 
-    
-
-    revalidatePath("/organization/org_2YVoQeewTmqaLosXq8Kbajsibet");
-    redirect("/organization/org_2YVoQeewTmqaLosXq8Kbajsibet");
-} // Server action | similar to POST request
+export const createBoard = createSafeAction(CreateBoard, handler );

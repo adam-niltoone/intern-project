@@ -65,6 +65,11 @@
     --ring: 0 0% 83.1%;
   }
 }
+html,
+body,
+:root {
+    height: 100%;
+}
  
 @layer base {
   * {
