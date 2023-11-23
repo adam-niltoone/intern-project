@@ -27,7 +27,7 @@ const textFont = Poppins({
 
 const LandingPage = () => {
     return(
-        <div className="flex items-center justify-center flex-col">
+        <div className="flex pb-52 items-center justify-center flex-col">
             <div className={cn(
                 "flex items-center justify-center flex-col",
                 headingFont.className,
