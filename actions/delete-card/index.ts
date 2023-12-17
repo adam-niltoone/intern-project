@@ -8,8 +8,8 @@ import { createSafeAction } from "@/lib/create-safe-action";
 
 import { DeleteCard } from "./schema";
 import { InputType, ReturnType } from "./types";
-// import { createAuditLog } from "@/lib/create-audit-log";
-// import { ACTION, ENTITY_TYPE } from "@prisma/client";
+import { createAuditLog } from "@/lib/create-audit-log";
+import { ACTION, ENTITY_TYPE } from "@prisma/client";
 // import { decreaseAvailableCount } from "@/lib/org-limit";
 // import { checkSubscription } from "@/lib/subscription";
 
@@ -39,12 +39,12 @@ const handler = async (data: InputType): Promise<ReturnType> => {
       },
     });
 
-    // await createAuditLog({
-    //   entityTitle: card.title,
-    //   entityId: card.id,
-    //   entityType: ENTITY_TYPE.CARD,
-    //   action: ACTION.DELETE,
-    // })
+    await createAuditLog({
+      entityTitle: card.title,
+      entityId: card.id,
+      entityType: ENTITY_TYPE.CARD,
+      action: ACTION.DELETE,
+    });
   } catch (error) {
     return {
       error: "Failed to delete.",
